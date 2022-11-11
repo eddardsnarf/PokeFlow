@@ -50,8 +50,8 @@ class FirstFragment : Fragment() {
 
                 }
                 is PokeUiState.Succes -> {
-                    binding.imageviewFirst.load(it.pokeUiModel.imageUrl)
-                    binding.textviewFirst.text = it.pokeUiModel.type
+                    binding.imageviewFirst.load(it.pokeInfoUiModel.imageUrl)
+                    binding.textviewFirst.text = it.pokeInfoUiModel.type
                 }
             }
         }

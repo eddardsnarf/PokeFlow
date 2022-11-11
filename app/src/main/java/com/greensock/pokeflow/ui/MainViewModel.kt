@@ -6,33 +6,44 @@ import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.greensock.pokeflow.data.local.model.PokemonDataModel
 import com.greensock.pokeflow.data.repo.PokeRepository
-import com.greensock.pokeflow.ui.model.PokeUiModel
+import com.greensock.pokeflow.ui.model.PokeInfoUiModel
 import com.greensock.pokeflow.ui.model.PokeUiState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class MainViewModel(private val repo: PokeRepository) : ViewModel() {
-    private val repoFlow: Flow<Result<PokemonDataModel>> = repo.getPokemonInfoFlow()
+    private val repoListFlow: Flow<Result<List<PokemonDataModel>>> = repo.getPokemonListFlow()
+
+    private val repoInfoFlow: Flow<Result<PokemonDataModel>> = repo.getPokemonInfoFlow()
     val uiState: LiveData<PokeUiState> =
-        repoFlow
-            .mapNotNull { result ->
-                if (result.isSuccess) {
-                    result.getOrNull()
-                        ?.let { dataModel ->
-                            PokeUiState.Succes(
-                                PokeUiModel(
-                                    dataModel.name,
-                                    "${dataModel.type} type",
-                                    dataModel.imageUrl,
-                                    dataModel.spriteUrl,
+        repoInfoFlow
+            .combineTransform(repoListFlow) { infoResult, listResult ->
+                if (!(infoResult.isFailure || listResult.isFailure)) {
+                    infoResult.getOrNull()?.let { infoDataModel ->
+                        listResult.getOrNull()?.let { list ->
+                            emit(
+                                PokeUiState.Succes(
+                                    PokeInfoUiModel(
+                                        infoDataModel.name,
+                                        "${infoDataModel.type} type",
+                                        infoDataModel.imageUrl,
+                                        infoDataModel.spriteUrl,
+                                    ), list.map {
+                                        PokeInfoUiModel(
+                                            it.name,
+                                            "${it.type} type",
+                                            it.imageUrl,
+                                            it.spriteUrl,
+                                        )
+                                    }
                                 )
                             )
                         }
-                } else {
-                    null
+                    }
+
                 }
             }.stateIn(
                 scope = viewModelScope,

@@ -1,17 +1,23 @@
 package com.greensock.pokeflow.ui.fragment
 
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
 import androidx.navigation.fragment.findNavController
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.ListAdapter
+import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.greensock.pokeflow.R
 import com.greensock.pokeflow.databinding.FragmentSecondBinding
+import com.greensock.pokeflow.databinding.ItemPokeListBinding
 import com.greensock.pokeflow.getMainViewModeFactory
 import com.greensock.pokeflow.ui.MainViewModel
+import com.greensock.pokeflow.ui.model.PokeInfoUiModel
 import com.greensock.pokeflow.ui.model.PokeUiState
 
 /**
@@ -43,6 +49,13 @@ class SecondFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        val adapter = SecondFragmentAdapter()
+        binding.rvPokeList.layoutManager = LinearLayoutManager(
+            requireActivity(),
+            LinearLayoutManager.VERTICAL, false
+        )
+        binding.rvPokeList.adapter = adapter
+
         binding.buttonSecond.setOnClickListener {
             findNavController().navigate(R.id.action_SecondFragment_to_FirstFragment)
         }
@@ -52,7 +65,7 @@ class SecondFragment : Fragment() {
 
                 }
                 is PokeUiState.Succes -> {
-                    binding.imageviewSecond.load(it.pokeUiModel.spriteUrl)
+                    (binding.rvPokeList.adapter as SecondFragmentAdapter).submitList(it.list)
                 }
             }
         }
@@ -62,4 +75,41 @@ class SecondFragment : Fragment() {
         super.onDestroyView()
         _binding = null
     }
+}
+
+class SecondFragmentAdapter :
+    ListAdapter<PokeInfoUiModel, PokemonItemViewHolder>(diffCallback) {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PokemonItemViewHolder {
+        return PokemonItemViewHolder(
+            ItemPokeListBinding.inflate(
+                LayoutInflater.from(parent.context),
+                parent,
+                false
+            )
+        )
+    }
+
+    override fun onBindViewHolder(holder: PokemonItemViewHolder, position: Int) {
+        val item = currentList[position]
+        holder.bind(item)
+    }
+}
+
+private val diffCallback = object : DiffUtil.ItemCallback<PokeInfoUiModel>() {
+    override fun areItemsTheSame(oldItem: PokeInfoUiModel, newItem: PokeInfoUiModel): Boolean {
+        return oldItem.name == newItem.name
+    }
+
+    override fun areContentsTheSame(oldItem: PokeInfoUiModel, newItem: PokeInfoUiModel): Boolean {
+        return oldItem == newItem
+    }
+}
+
+class PokemonItemViewHolder(val binding: ItemPokeListBinding) :
+    RecyclerView.ViewHolder(binding.root) {
+    fun bind(item: PokeInfoUiModel?) {
+        item ?: return
+        binding.imageviewSecond.load(item.spriteUrl)
+    }
+
 }

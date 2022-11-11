@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity() {
 
                 }
                 is PokeUiState.Succes -> {
-                    Snackbar.make(binding.fab, state.pokeUiModel.name, Snackbar.LENGTH_LONG)
+                    Snackbar.make(binding.fab, state.pokeInfoUiModel.name, Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show()
                 }
             }
